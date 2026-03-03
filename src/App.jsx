@@ -15,10 +15,10 @@ const PRINCIPAL_PK = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9
 // ── Tier System ──
 const TIERS = {
   SOVEREIGN: { min: 90, color: "#10B981", bg: "rgba(16,185,129,0.12)", border: "#065F46", label: "SOVEREIGN", icon: "◆" },
-  TRUSTED:   { min: 70, color: "#3B82F6", bg: "rgba(59,130,246,0.12)", border: "#1E3A5F", label: "TRUSTED",   icon: "●" },
-  VERIFIED:  { min: 40, color: "#8B5CF6", bg: "rgba(139,92,246,0.12)", border: "#4C1D95", label: "VERIFIED",  icon: "▲" },
-  BASIC:     { min: 20, color: "#F59E0B", bg: "rgba(245,158,11,0.12)", border: "#78350F", label: "BASIC",     icon: "■" },
-  SHADOW:    { min: 0,  color: "#6B7280", bg: "rgba(107,114,128,0.12)",border: "#374151", label: "SHADOW",    icon: "○" },
+  TRUSTED: { min: 70, color: "#3B82F6", bg: "rgba(59,130,246,0.12)", border: "#1E3A5F", label: "TRUSTED", icon: "●" },
+  VERIFIED: { min: 40, color: "#8B5CF6", bg: "rgba(139,92,246,0.12)", border: "#4C1D95", label: "VERIFIED", icon: "▲" },
+  BASIC: { min: 20, color: "#F59E0B", bg: "rgba(245,158,11,0.12)", border: "#78350F", label: "BASIC", icon: "■" },
+  SHADOW: { min: 0, color: "#6B7280", bg: "rgba(107,114,128,0.12)", border: "#374151", label: "SHADOW", icon: "○" },
 };
 const getTier = (score) => {
   for (const t of Object.values(TIERS)) if (score >= t.min) return t;
@@ -164,7 +164,7 @@ function transformAgent(manifest, fleet, allManifests, liveDelegation, liveHisto
   // ── History: prefer live API, fallback to synthesized ──
   let history;
   if (liveHistory && liveHistory.history && liveHistory.history.length > 0) {
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     history = liveHistory.history.map(h => ({
       t: months[new Date(h.calculated_at).getMonth()] || "?",
       s: h.score,
@@ -295,7 +295,7 @@ function TierBadge({ tier, size = "sm" }) {
 }
 
 function StatusIndicator({ status }) {
-  const cfg = { active: ["#10B981","Active"], warning: ["#F59E0B","Warning"], provisioning: ["#6B7280","Provisioning"], suspended: ["#EF4444","Suspended"] };
+  const cfg = { active: ["#10B981", "Active"], warning: ["#F59E0B", "Warning"], provisioning: ["#6B7280", "Provisioning"], suspended: ["#EF4444", "Suspended"] };
   const [color, label] = cfg[status] || cfg.active;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, color }}>
@@ -312,12 +312,12 @@ function ScoreRing({ score, size = 56 }) {
   const pct = score / 100;
   return (
     <svg width={size} height={size} style={{ display: "block" }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1F2937" strokeWidth={4} />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={t.color} strokeWidth={4}
-        strokeDasharray={`${c*pct} ${c*(1-pct)}`} strokeLinecap="round"
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1F2937" strokeWidth={4} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={t.color} strokeWidth={4}
+        strokeDasharray={`${c * pct} ${c * (1 - pct)}`} strokeLinecap="round"
         style={{ transform: "rotate(-90deg)", transformOrigin: "center", transition: "stroke-dasharray 0.6s ease" }} />
-      <text x={size/2} y={size/2+1} textAnchor="middle" dominantBaseline="central"
-        fill={t.color} fontSize={size*0.28} fontWeight="800" style={mono}>{score}</text>
+      <text x={size / 2} y={size / 2 + 1} textAnchor="middle" dominantBaseline="central"
+        fill={t.color} fontSize={size * 0.28} fontWeight="800" style={mono}>{score}</text>
     </svg>
   );
 }
@@ -385,11 +385,11 @@ function TerritoryMapSVG({ agents, selectedAgent, onSelect }) {
                 <stop offset="100%" stopColor={getTier(a.score).color} stopOpacity={0.05} />
               </radialGradient>
             ))}
-            <filter id="glow"><feGaussianBlur stdDeviation="3" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow"><feGaussianBlur stdDeviation="3" result="g" /><feMerge><feMergeNode in="g" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           </defs>
           <rect width={mapW} height={mapH} fill="#080D18" rx={8} />
-          {Array.from({length:20},(_,i)=><line key={`gv${i}`} x1={i*20} y1={0} x2={i*20} y2={mapH} stroke="#111827" strokeWidth={0.5}/>)}
-          {Array.from({length:25},(_,i)=><line key={`gh${i}`} x1={0} y1={i*20} x2={mapW} y2={i*20} stroke="#111827" strokeWidth={0.5}/>)}
+          {Array.from({ length: 20 }, (_, i) => <line key={`gv${i}`} x1={i * 20} y1={0} x2={i * 20} y2={mapH} stroke="#111827" strokeWidth={0.5} />)}
+          {Array.from({ length: 25 }, (_, i) => <line key={`gh${i}`} x1={0} y1={i * 20} x2={mapW} y2={i * 20} stroke="#111827" strokeWidth={0.5} />)}
           <path d={italyPath} fill="#0F1629" stroke="#1E3A5F" strokeWidth={1.5} />
           <path d={sardiniaPath} fill="#0F1629" stroke="#1E3A5F" strokeWidth={1.5} />
           <path d={sicilyPath} fill="#0F1629" stroke="#1E3A5F" strokeWidth={1.5} />
@@ -404,7 +404,7 @@ function TerritoryMapSVG({ agents, selectedAgent, onSelect }) {
                 {a.h3Cells.slice(0, 4).map((_, i) => {
                   const angle = (i / 4) * Math.PI * 2;
                   const hr = r * 0.5;
-                  return <circle key={i} cx={cx + Math.cos(angle)*hr} cy={cy + Math.sin(angle)*hr} r={3} fill={t.color} opacity={0.3} />;
+                  return <circle key={i} cx={cx + Math.cos(angle) * hr} cy={cy + Math.sin(angle) * hr} r={3} fill={t.color} opacity={0.3} />;
                 })}
                 <circle cx={cx} cy={cy} r={5} fill={t.color} filter="url(#glow)" opacity={a.status === "active" || a.status === "warning" ? 1 : 0.4}>
                   {(a.status === "active" || a.status === "warning") && <animate attributeName="r" values="5;7;5" dur="2s" repeatCount="indefinite" />}
@@ -541,14 +541,14 @@ function ComplianceTimeline({ agent }) {
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
             <XAxis dataKey="t" tick={{ fontSize: 10, fill: "#4B5563" }} axisLine={false} tickLine={false} />
-            <YAxis domain={[0, 100]} ticks={[20,40,70,90]} tick={{ fontSize: 9, fill: "#374151" }} axisLine={false} tickLine={false} />
+            <YAxis domain={[0, 100]} ticks={[20, 40, 70, 90]} tick={{ fontSize: 9, fill: "#374151" }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ background: "#1E293B", border: "1px solid #374151", borderRadius: 6, fontSize: 11, ...mono }} labelStyle={{ color: "#9CA3AF" }}
               formatter={(v, name) => [v, name === "s" ? "Score" : "Breadcrumbs"]} />
             <Area type="monotone" dataKey="s" name="Score" stroke={t.color} strokeWidth={2.5} fill={`url(#tg-${agent.id})`} dot={{ r: 3, fill: t.color, strokeWidth: 0 }} activeDot={{ r: 5, stroke: t.color, strokeWidth: 2, fill: "#0F1629" }} />
           </AreaChart>
         </ResponsiveContainer>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 4 }}>
-          {[{s:20,l:"BASIC"},{s:40,l:"VERIFIED"},{s:70,l:"TRUSTED"},{s:90,l:"SOVEREIGN"}].map(th => (
+          {[{ s: 20, l: "BASIC" }, { s: 40, l: "VERIFIED" }, { s: 70, l: "TRUSTED" }, { s: 90, l: "SOVEREIGN" }].map(th => (
             <span key={th.l} style={{ fontSize: 8, color: "#374151", ...mono }}>{th.s} {th.l}</span>
           ))}
         </div>
@@ -613,11 +613,11 @@ function generateReportData(framework, agents) {
       title: "EU AI Act Compliance Report",
       subtitle: "Regulation (EU) 2024/1689 — High-Risk AI System Audit",
       sections: [
-        { heading: "Art. 14 — Human Oversight", content: `Principal: ${principal.slice(0,16)}...${principal.slice(-8)}\nDelegation chain depth: max ${Math.max(...agents.map(a => a.delegationDepth))}\nAll agents traceable to human principal via Ed25519 signed delegation certificates.\nScope narrows at each delegation level (non-escalation enforced).` },
-        { heading: "Art. 13 — Traceability", content: `Total breadcrumbs collected: ${agents.reduce((s,a) => s + a.breadcrumbs, 0)}\nEach breadcrumb: H3 cell (res 7) + Ed25519 signature + UTC timestamp\nChain integrity: breadcrumbs form append-only hash chain per agent.\nStorage: Supabase PostgreSQL with RLS policies.` },
+        { heading: "Art. 14 — Human Oversight", content: `Principal: ${principal.slice(0, 16)}...${principal.slice(-8)}\nDelegation chain depth: max ${Math.max(...agents.map(a => a.delegationDepth))}\nAll agents traceable to human principal via Ed25519 signed delegation certificates.\nScope narrows at each delegation level (non-escalation enforced).` },
+        { heading: "Art. 13 — Traceability", content: `Total breadcrumbs collected: ${agents.reduce((s, a) => s + a.breadcrumbs, 0)}\nEach breadcrumb: H3 cell (res 7) + Ed25519 signature + UTC timestamp\nChain integrity: breadcrumbs form append-only hash chain per agent.\nStorage: Supabase PostgreSQL with RLS policies.` },
         { heading: "Delegation Chain Audit", content: fleetRows.map(r => `  ${r.name}: depth ${r.delegationDepth}, delegated by ${r.delegatedBy}, scope [${r.delegationScope}]`).join("\n") },
         { heading: "Risk Classification", content: `System type: AI Agent Fleet — Grid Infrastructure Monitoring\nClassification: HIGH-RISK (Annex III, Category 2 — Critical Infrastructure)\nOrganization: Terna S.p.A. — Rete di Trasmissione Nazionale\nGovernance protocol: GNS-AIP (Agent Identity Protocol)` },
-        { heading: "High-Risk System Registry Entry", content: `Registry ID: GNS-AIP-TERNA-${now.slice(0,10).replace(/-/g,"")}\nTotal agents: ${agents.length}\nActive: ${agents.filter(a => a.status === "active" || a.status === "warning").length}\nViolations (30d): ${violationRows.length}\nAvg compliance score: ${Math.round(agents.reduce((s,a) => s + a.score, 0) / agents.length)}` },
+        { heading: "High-Risk System Registry Entry", content: `Registry ID: GNS-AIP-TERNA-${now.slice(0, 10).replace(/-/g, "")}\nTotal agents: ${agents.length}\nActive: ${agents.filter(a => a.status === "active" || a.status === "warning").length}\nViolations (30d): ${violationRows.length}\nAvg compliance score: ${Math.round(agents.reduce((s, a) => s + a.score, 0) / agents.length)}` },
       ],
     },
     gdpr: {
@@ -625,7 +625,7 @@ function generateReportData(framework, agents) {
       subtitle: "Automated Decision-Making & Profiling Audit",
       sections: [
         { heading: "Automated Decision Inventory", content: agents.map(a => `  ${a.displayName} (${a.tier}): ${a.role}\n    Status: ${a.status} | Score: ${a.score} | Territory: ${a.territory.join(", ")}`).join("\n") },
-        { heading: "Human Principal Chain Proof", content: `All automated decisions traceable to human principal:\n  Principal PK: ${principal.slice(0,16)}...${principal.slice(-8)}\n  Delegation method: Ed25519 signed certificates\n  Chain verification: Cryptographic proof at each level\n  Max depth: ${Math.max(...agents.map(a => a.delegationDepth))} levels` },
+        { heading: "Human Principal Chain Proof", content: `All automated decisions traceable to human principal:\n  Principal PK: ${principal.slice(0, 16)}...${principal.slice(-8)}\n  Delegation method: Ed25519 signed certificates\n  Chain verification: Cryptographic proof at each level\n  Max depth: ${Math.max(...agents.map(a => a.delegationDepth))} levels` },
         { heading: "Territorial Compliance Verification", content: agents.map(a => `  ${a.displayName}: declared ${a.territory.join(", ")} | cells: ${a.h3Cells?.length || 0} | violations: ${a.violations.length}`).join("\n") },
         { heading: "Data Processing Scope Attestation", content: agents.map(a => `  ${a.displayName}: scope [${a.delegationScope?.join(", ") || "—"}]\n    Breadcrumbs: ${a.breadcrumbs} | H3 Resolution: 7 (~5.16 km²)`).join("\n") },
         { heading: "Right to Explanation Evidence", content: `Each agent action is:\n  1. Signed with agent's Ed25519 private key\n  2. Bound to declared territory (H3 cells)\n  3. Scoped by delegation certificate capabilities\n  4. Traceable through breadcrumb chain to human principal\n  5. Auditable via compliance score breakdown (delegation, territory, history, staking)` },
@@ -638,7 +638,7 @@ function generateReportData(framework, agents) {
         { heading: "Agent Activity Timeline", content: agents.map(a => `  ${a.displayName} (created ${a.created}):\n    Score progression: ${a.history.map(h => `${h.t}:${h.s}`).join(" → ")}`).join("\n") },
         { heading: "Financial Operation Attestation", content: `Organization: Terna S.p.A.\nJurisdiction: EU-IT\nStaking: GNS tokens staked per agent as commitment bond\nSettlement: Stellar network (Ed25519 native)\nPayment scope: IDUP payment layer integration` },
         { heading: "Compliance Score Cryptographic Proof", content: agents.map(a => `  ${a.displayName}:\n    Score: ${a.score}/100 | Tier: ${a.tier}\n    Breakdown: delegation ${a._manifest?.compliance?.breakdown?.delegation || "—"}, territory ${a._manifest?.compliance?.breakdown?.territory || "—"}, history ${a._manifest?.compliance?.breakdown?.history || "—"}, staking ${a._manifest?.compliance?.breakdown?.staking || "—"}`).join("\n") },
-        { heading: "Breadcrumb Audit Trail Export", content: `Total breadcrumbs: ${agents.reduce((s,a) => s + a.breadcrumbs, 0)}\nPer agent:\n${agents.map(a => `  ${a.displayName}: ${a.breadcrumbs} breadcrumbs, ${a.h3Cells?.length || 0} H3 cells`).join("\n")}` },
+        { heading: "Breadcrumb Audit Trail Export", content: `Total breadcrumbs: ${agents.reduce((s, a) => s + a.breadcrumbs, 0)}\nPer agent:\n${agents.map(a => `  ${a.displayName}: ${a.breadcrumbs} breadcrumbs, ${a.h3Cells?.length || 0} H3 cells`).join("\n")}` },
         { heading: "Risk Exposure Summary", content: `Total violations: ${violationRows.length}\n${violationRows.length > 0 ? violationRows.map(v => `  [${v.severity.toUpperCase()}] ${v.agent} — ${v.type}: ${v.detail} (${v.timestamp})`).join("\n") : "  No violations recorded."}` },
       ],
     },
@@ -742,8 +742,8 @@ function exportPDF(framework, agents) {
 <div class="meta">
   <div><span>Generated:</span> <strong>${new Date(data.meta.generated).toLocaleString("en-GB", { dateStyle: "long", timeStyle: "medium" })}</strong></div>
   <div><span>Organization:</span> <strong>Terna S.p.A. — RTN</strong></div>
-  <div><span>Principal:</span> <strong class="mono" style="font-size:9px">${data.meta.principal.slice(0,20)}...${data.meta.principal.slice(-8)}</strong></div>
-  <div><span>Agent Fleet:</span> <strong>${data.meta.agentCount} agents · ${agents.reduce((s,a) => s + a.breadcrumbs, 0)} breadcrumbs</strong></div>
+  <div><span>Principal:</span> <strong class="mono" style="font-size:9px">${data.meta.principal.slice(0, 20)}...${data.meta.principal.slice(-8)}</strong></div>
+  <div><span>Agent Fleet:</span> <strong>${data.meta.agentCount} agents · ${agents.reduce((s, a) => s + a.breadcrumbs, 0)} breadcrumbs</strong></div>
 </div>
 <table>
   <thead><tr><th>Agent</th><th>Territory</th><th>Tier</th><th>Score</th><th>Status</th><th>Breadcrumbs</th><th>Violations</th><th>Depth</th></tr></thead>
@@ -758,7 +758,7 @@ ${data.violations.length > 0 ? `
   <table>
     <thead><tr><th>Timestamp</th><th>Agent</th><th>Type</th><th>Severity</th><th>Detail</th></tr></thead>
     <tbody>
-${data.violations.map(v => `      <tr><td>${v.timestamp.replace("T"," ").slice(0,19)}</td><td>${v.agent}</td><td class="mono">${v.type}</td><td><span class="badge" style="background:${v.severity==="high"?"#FEE2E2;color:#DC2626":"#FEF3C7;color:#D97706"}">${v.severity.toUpperCase()}</span></td><td>${v.detail}</td></tr>`).join("\n")}
+${data.violations.map(v => `      <tr><td>${v.timestamp.replace("T", " ").slice(0, 19)}</td><td>${v.agent}</td><td class="mono">${v.type}</td><td><span class="badge" style="background:${v.severity === "high" ? "#FEE2E2;color:#DC2626" : "#FEF3C7;color:#D97706"}">${v.severity.toUpperCase()}</span></td><td>${v.detail}</td></tr>`).join("\n")}
     </tbody>
   </table>
 </div>` : ""}
@@ -830,8 +830,8 @@ function AuditExport({ agents }) {
                           color: fw.color, cursor: isGenerating ? "wait" : "pointer", fontSize: 11, fontWeight: 700,
                           ...mono, transition: "all 0.15s",
                         }}
-                        onMouseOver={e => { if (!isGenerating) { e.currentTarget.style.background = `${fw.color}20`; e.currentTarget.style.borderColor = fw.color; }}}
-                        onMouseOut={e => { if (!isGenerating) { e.currentTarget.style.background = wasExported ? `${fw.color}15` : "transparent"; e.currentTarget.style.borderColor = wasExported ? fw.color : `${fw.color}40`; }}}>
+                        onMouseOver={e => { if (!isGenerating) { e.currentTarget.style.background = `${fw.color}20`; e.currentTarget.style.borderColor = fw.color; } }}
+                        onMouseOut={e => { if (!isGenerating) { e.currentTarget.style.background = wasExported ? `${fw.color}15` : "transparent"; e.currentTarget.style.borderColor = wasExported ? fw.color : `${fw.color}40`; } }}>
                         {isGenerating ? "⏳ Generating..." : wasExported ? `✓ Export ${fmt}` : `Export ${fmt}`}
                       </button>
                     );
@@ -898,21 +898,12 @@ export default function Dashboard() {
     setUser(null);
   };
 
-  // If Supabase is configured and user not logged in, show login screen
-  if (supabase && authLoading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0A0F1A", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280", fontFamily: "DM Sans, sans-serif" }}>
-        Loading...
-      </div>
-    );
-  }
-
-  if (supabase && !user) {
-    return <LoginScreen supabase={supabase} onLogin={setUser} />;
-  }
-
   // ── Fetch live data from Railway API ──
+  // (Must be above early returns to satisfy Rules of Hooks)
   useEffect(() => {
+    // Skip fetching if user is not authenticated yet
+    if (supabase && !user) return;
+
     let cancelled = false;
 
     async function loadAgents() {
@@ -959,7 +950,7 @@ export default function Dashboard() {
     // Auto-refresh every 60 seconds
     const iv = setInterval(loadAgents, 60000);
     return () => { cancelled = true; clearInterval(iv); };
-  }, []);
+  }, [user]);
 
   // Clock
   useEffect(() => {
@@ -980,6 +971,19 @@ export default function Dashboard() {
     totalBreadcrumbs: agents.reduce((s, a) => s + a.breadcrumbs, 0),
     totalViolations: agents.reduce((s, a) => s + a.violations.length, 0),
   }), [agents]);
+
+  // If Supabase is configured and user not logged in, show login screen
+  if (supabase && authLoading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0A0F1A", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280", fontFamily: "DM Sans, sans-serif" }}>
+        Loading...
+      </div>
+    );
+  }
+
+  if (supabase && !user) {
+    return <LoginScreen supabase={supabase} onLogin={setUser} />;
+  }
 
   const nav = [
     { key: "fleet", icon: "⬡", label: "Agent Fleet" },
@@ -1017,221 +1021,221 @@ export default function Dashboard() {
 
       {/* ═══ Main Layout ═══ */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-      {/* ── Sidebar ── */}
-      <div style={{ width: 210, background: "#0A1020", borderRight: "1px solid #1E293B", display: "flex", flexDirection: "column", flexShrink: 0 }}>
-        <div style={{ padding: "16px 14px", borderBottom: "1px solid #1E293B" }}>
-          <div style={{ fontSize: 17, fontWeight: 800, background: "linear-gradient(135deg,#3B82F6,#8B5CF6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>GNS-AIP</div>
-          <div style={{ fontSize: 9, color: "#4B5563", letterSpacing: 1.5, ...mono, marginTop: 2 }}>COMPLIANCE DASHBOARD</div>
-        </div>
-        <div style={{ padding: "8px 6px", flex: 1 }}>
-          {nav.map(n => (
-            <button key={n.key} onClick={() => { setActiveView(n.key); if (n.key !== "timeline") setSelectedAgent(null); }}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%",
-                padding: "9px 10px", marginBottom: 1, borderRadius: 6, border: "none",
-                background: activeView === n.key ? "#1E293B" : "transparent",
-                color: activeView === n.key ? "#60A5FA" : "#6B7280",
-                cursor: "pointer", fontSize: 12, fontWeight: activeView === n.key ? 600 : 400,
-                transition: "all 0.12s", textAlign: "left",
-              }}>
-              <span style={{ fontSize: 13, width: 18, textAlign: "center" }}>{n.icon}</span>{n.label}
-            </button>
-          ))}
-        </div>
-        {/* Data source */}
-        <div style={{ padding: "8px 14px", borderTop: "1px solid #1E293B" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <DataSourceBadge live={agents.length > 0} />
-            {lastFetch && <span style={{ fontSize: 8, color: "#374151", ...mono }}>{lastFetch.toLocaleTimeString()}</span>}
+        {/* ── Sidebar ── */}
+        <div style={{ width: 210, background: "#0A1020", borderRight: "1px solid #1E293B", display: "flex", flexDirection: "column", flexShrink: 0 }}>
+          <div style={{ padding: "16px 14px", borderBottom: "1px solid #1E293B" }}>
+            <div style={{ fontSize: 17, fontWeight: 800, background: "linear-gradient(135deg,#3B82F6,#8B5CF6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>GNS-AIP</div>
+            <div style={{ fontSize: 9, color: "#4B5563", letterSpacing: 1.5, ...mono, marginTop: 2 }}>COMPLIANCE DASHBOARD</div>
           </div>
-          <div style={{ fontSize: 8, color: "#374151", ...mono }}>API: gns-browser-production.up.railway.app</div>
+          <div style={{ padding: "8px 6px", flex: 1 }}>
+            {nav.map(n => (
+              <button key={n.key} onClick={() => { setActiveView(n.key); if (n.key !== "timeline") setSelectedAgent(null); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, width: "100%",
+                  padding: "9px 10px", marginBottom: 1, borderRadius: 6, border: "none",
+                  background: activeView === n.key ? "#1E293B" : "transparent",
+                  color: activeView === n.key ? "#60A5FA" : "#6B7280",
+                  cursor: "pointer", fontSize: 12, fontWeight: activeView === n.key ? 600 : 400,
+                  transition: "all 0.12s", textAlign: "left",
+                }}>
+                <span style={{ fontSize: 13, width: 18, textAlign: "center" }}>{n.icon}</span>{n.label}
+              </button>
+            ))}
+          </div>
+          {/* Data source */}
+          <div style={{ padding: "8px 14px", borderTop: "1px solid #1E293B" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <DataSourceBadge live={agents.length > 0} />
+              {lastFetch && <span style={{ fontSize: 8, color: "#374151", ...mono }}>{lastFetch.toLocaleTimeString()}</span>}
+            </div>
+            <div style={{ fontSize: 8, color: "#374151", ...mono }}>API: gns-browser-production.up.railway.app</div>
+          </div>
+          <div style={{ padding: "10px 14px", borderTop: "1px solid #1E293B" }}>
+            <div style={{ fontSize: 9, color: "#374151", ...mono }}>v0.6.0-live · gns-aip.gcrumbs.com</div>
+            <div style={{ fontSize: 9, color: "#374151", marginTop: 2 }}>© 2026 ULISSY s.r.l.</div>
+          </div>
         </div>
-        <div style={{ padding: "10px 14px", borderTop: "1px solid #1E293B" }}>
-          <div style={{ fontSize: 9, color: "#374151", ...mono }}>v0.6.0-live · gns-aip.gcrumbs.com</div>
-          <div style={{ fontSize: 9, color: "#374151", marginTop: 2 }}>© 2026 ULISSY s.r.l.</div>
-        </div>
-      </div>
 
-      {/* ── Main ── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        {/* Top bar */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 20px", borderBottom: "1px solid #1E293B", background: "#0A1020", flexShrink: 0 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#F1F5F9" }}>
-              {nav.find(n => n.key === activeView)?.icon} {nav.find(n => n.key === activeView)?.label}
-              {selectedAgent && activeView === "timeline" && <span style={{ color: "#6B7280", fontWeight: 400 }}> — {selectedAgent.displayName}</span>}
-            </h1>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{ fontSize: 10, color: "#4B5563", ...mono }}>{clock.toLocaleTimeString()} CET</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "#111827", borderRadius: 6, border: "1px solid #1E293B" }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 5px #10B981" }} />
-              <span style={{ fontSize: 10, color: "#9CA3AF" }}>{user ? user.email : "Camilo Ayerbe"}</span>
-              {supabase && user && <button onClick={handleLogout} style={{ marginLeft: 4, padding: "2px 8px", fontSize: 9, background: "transparent", border: "1px solid #374151", borderRadius: 4, color: "#6B7280", cursor: "pointer" }}>Logout</button>}
+        {/* ── Main ── */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Top bar */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 20px", borderBottom: "1px solid #1E293B", background: "#0A1020", flexShrink: 0 }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#F1F5F9" }}>
+                {nav.find(n => n.key === activeView)?.icon} {nav.find(n => n.key === activeView)?.label}
+                {selectedAgent && activeView === "timeline" && <span style={{ color: "#6B7280", fontWeight: 400 }}> — {selectedAgent.displayName}</span>}
+              </h1>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ fontSize: 10, color: "#4B5563", ...mono }}>{clock.toLocaleTimeString()} CET</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "#111827", borderRadius: 6, border: "1px solid #1E293B" }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 5px #10B981" }} />
+                <span style={{ fontSize: 10, color: "#9CA3AF" }}>{user ? user.email : "Camilo Ayerbe"}</span>
+                {supabase && user && <button onClick={handleLogout} style={{ marginLeft: 4, padding: "2px 8px", fontSize: 9, background: "transparent", border: "1px solid #374151", borderRadius: 4, color: "#6B7280", cursor: "pointer" }}>Logout</button>}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, overflow: "auto", padding: 20 }}>
+          {/* Content */}
+          <div style={{ flex: 1, overflow: "auto", padding: 20 }}>
 
-          {/* Loading */}
-          {loading && <LoadingState message="Fetching agent fleet from GNS Node..." />}
+            {/* Loading */}
+            {loading && <LoadingState message="Fetching agent fleet from GNS Node..." />}
 
-          {/* Error */}
-          {error && !loading && (
-            <Card style={{ padding: 20, borderColor: "#7F1D1D" }}>
-              <div style={{ color: "#FCA5A5", fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Connection Error</div>
-              <div style={{ color: "#6B7280", fontSize: 12, marginBottom: 12 }}>{error}</div>
-              <div style={{ fontSize: 10, color: "#4B5563", ...mono }}>API: {API_BASE}</div>
-            </Card>
-          )}
-
-          {/* ── FLEET VIEW ── */}
-          {!loading && !error && activeView === "fleet" && (
-            <>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12, marginBottom: 20 }}>
-                {[
-                  { l: "Total Agents", v: stats.total, c: "#60A5FA" },
-                  { l: "Active", v: stats.active, c: "#10B981" },
-                  { l: "Warnings", v: stats.warnings, c: stats.warnings > 0 ? "#F59E0B" : "#10B981" },
-                  { l: "Avg Score", v: stats.avgScore, c: "#8B5CF6" },
-                  { l: "Breadcrumbs", v: stats.totalBreadcrumbs.toLocaleString(), c: "#60A5FA" },
-                  { l: "Violations (30d)", v: stats.totalViolations, c: stats.totalViolations > 0 ? "#EF4444" : "#10B981" },
-                ].map((s, i) => (
-                  <Card key={i} style={{ padding: "12px 14px" }}>
-                    <SectionLabel>{s.l}</SectionLabel>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: s.c, ...mono, marginTop: 2 }}>{s.v}</div>
-                  </Card>
-                ))}
-              </div>
-
-              <Card>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr>
-                        {["Agent", "Role", "Territory", "Tier", "Score", "Status", "Breadcrumbs", "Depth", ""].map((h, i) => (
-                          <th key={i} style={{ padding: "10px 12px", textAlign: "left", color: "#4B5563", fontWeight: 600, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", borderBottom: "1px solid #1E293B", background: "#0A1020" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {agents.map(a => (
-                        <tr key={a.id} style={{ borderBottom: "1px solid #111827", cursor: "pointer", transition: "background 0.1s" }}
-                          onClick={() => handleAgentSelect(a)}
-                          onMouseEnter={e => e.currentTarget.style.background = "#111827"}
-                          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                          <td style={{ padding: "10px 12px" }}>
-                            <div style={{ fontWeight: 600, color: "#F1F5F9", fontSize: 12 }}>{a.displayName}</div>
-                            <div style={{ fontSize: 9, color: "#374151", ...mono }}>{a.shortId}</div>
-                          </td>
-                          <td style={{ padding: "10px 12px", color: "#9CA3AF", fontSize: 11 }}>{a.role}</td>
-                          <td style={{ padding: "10px 12px", color: "#6B7280", fontSize: 11 }}>{a.territory.join(", ")}</td>
-                          <td style={{ padding: "10px 12px" }}><TierBadge tier={a.tier} /></td>
-                          <td style={{ padding: "10px 12px" }}><ScoreRing score={a.score} size={36} /></td>
-                          <td style={{ padding: "10px 12px" }}><StatusIndicator status={a.status} /></td>
-                          <td style={{ padding: "10px 12px", ...mono, fontSize: 11, color: "#9CA3AF" }}>{a.breadcrumbs.toLocaleString()}</td>
-                          <td style={{ padding: "10px 12px", ...mono, fontSize: 11, color: "#4B5563" }}>{a.delegationDepth}</td>
-                          <td style={{ padding: "10px 12px" }}>
-                            {a.violations.length > 0 && (
-                              <span style={{ padding: "2px 6px", borderRadius: 3, background: "rgba(239,68,68,0.12)", border: "1px solid #7F1D1D", color: "#FCA5A5", fontSize: 9, fontWeight: 700 }}>
-                                {a.violations.length} violation{a.violations.length > 1 ? "s" : ""}
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+            {/* Error */}
+            {error && !loading && (
+              <Card style={{ padding: 20, borderColor: "#7F1D1D" }}>
+                <div style={{ color: "#FCA5A5", fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Connection Error</div>
+                <div style={{ color: "#6B7280", fontSize: 12, marginBottom: 12 }}>{error}</div>
+                <div style={{ fontSize: 10, color: "#4B5563", ...mono }}>API: {API_BASE}</div>
               </Card>
-            </>
-          )}
+            )}
 
-          {/* ── DELEGATION VIEW ── */}
-          {!loading && !error && activeView === "delegation" && <DelegationChain agents={agents} />}
-
-          {/* ── TIMELINE VIEW ── */}
-          {!loading && !error && activeView === "timeline" && (
-            <>
-              {selectedAgent ? (
-                <ComplianceTimeline agent={selectedAgent} />
-              ) : (
-                agents.map(a => <ComplianceTimeline key={a.id} agent={a} />)
-              )}
-              {!selectedAgent && (
-                <div style={{ textAlign: "center", padding: 12, fontSize: 11, color: "#374151" }}>
-                  Click any agent in Fleet view to isolate its timeline
+            {/* ── FLEET VIEW ── */}
+            {!loading && !error && activeView === "fleet" && (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12, marginBottom: 20 }}>
+                  {[
+                    { l: "Total Agents", v: stats.total, c: "#60A5FA" },
+                    { l: "Active", v: stats.active, c: "#10B981" },
+                    { l: "Warnings", v: stats.warnings, c: stats.warnings > 0 ? "#F59E0B" : "#10B981" },
+                    { l: "Avg Score", v: stats.avgScore, c: "#8B5CF6" },
+                    { l: "Breadcrumbs", v: stats.totalBreadcrumbs.toLocaleString(), c: "#60A5FA" },
+                    { l: "Violations (30d)", v: stats.totalViolations, c: stats.totalViolations > 0 ? "#EF4444" : "#10B981" },
+                  ].map((s, i) => (
+                    <Card key={i} style={{ padding: "12px 14px" }}>
+                      <SectionLabel>{s.l}</SectionLabel>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: s.c, ...mono, marginTop: 2 }}>{s.v}</div>
+                    </Card>
+                  ))}
                 </div>
-              )}
-            </>
-          )}
 
-          {/* ── TERRITORY MAP ── */}
-          {!loading && !error && activeView === "territory" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16 }}>
-              <TerritoryMapbox agents={agents} selectedAgent={selectedAgent} onSelect={handleAgentSelect} />
-              <div>
-                {(selectedAgent || agents[0]) && (() => {
-                  const a = selectedAgent || agents[0];
-                  const t = getTier(a.score);
-                  return (
-                    <Card>
-                      <CardHeader><span style={{ fontSize: 12, fontWeight: 600, color: "#F1F5F9" }}>Agent Detail</span></CardHeader>
-                      <div style={{ padding: 14 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                          <ScoreRing score={a.score} size={48} />
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9" }}>{a.displayName}</div>
-                            <div style={{ display: "flex", gap: 6, marginTop: 3 }}><TierBadge tier={a.tier} /><StatusIndicator status={a.status} /></div>
+                <Card>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr>
+                          {["Agent", "Role", "Territory", "Tier", "Score", "Status", "Breadcrumbs", "Depth", ""].map((h, i) => (
+                            <th key={i} style={{ padding: "10px 12px", textAlign: "left", color: "#4B5563", fontWeight: 600, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", borderBottom: "1px solid #1E293B", background: "#0A1020" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {agents.map(a => (
+                          <tr key={a.id} style={{ borderBottom: "1px solid #111827", cursor: "pointer", transition: "background 0.1s" }}
+                            onClick={() => handleAgentSelect(a)}
+                            onMouseEnter={e => e.currentTarget.style.background = "#111827"}
+                            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                            <td style={{ padding: "10px 12px" }}>
+                              <div style={{ fontWeight: 600, color: "#F1F5F9", fontSize: 12 }}>{a.displayName}</div>
+                              <div style={{ fontSize: 9, color: "#374151", ...mono }}>{a.shortId}</div>
+                            </td>
+                            <td style={{ padding: "10px 12px", color: "#9CA3AF", fontSize: 11 }}>{a.role}</td>
+                            <td style={{ padding: "10px 12px", color: "#6B7280", fontSize: 11 }}>{a.territory.join(", ")}</td>
+                            <td style={{ padding: "10px 12px" }}><TierBadge tier={a.tier} /></td>
+                            <td style={{ padding: "10px 12px" }}><ScoreRing score={a.score} size={36} /></td>
+                            <td style={{ padding: "10px 12px" }}><StatusIndicator status={a.status} /></td>
+                            <td style={{ padding: "10px 12px", ...mono, fontSize: 11, color: "#9CA3AF" }}>{a.breadcrumbs.toLocaleString()}</td>
+                            <td style={{ padding: "10px 12px", ...mono, fontSize: 11, color: "#4B5563" }}>{a.delegationDepth}</td>
+                            <td style={{ padding: "10px 12px" }}>
+                              {a.violations.length > 0 && (
+                                <span style={{ padding: "2px 6px", borderRadius: 3, background: "rgba(239,68,68,0.12)", border: "1px solid #7F1D1D", color: "#FCA5A5", fontSize: 9, fontWeight: 700 }}>
+                                  {a.violations.length} violation{a.violations.length > 1 ? "s" : ""}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              </>
+            )}
+
+            {/* ── DELEGATION VIEW ── */}
+            {!loading && !error && activeView === "delegation" && <DelegationChain agents={agents} />}
+
+            {/* ── TIMELINE VIEW ── */}
+            {!loading && !error && activeView === "timeline" && (
+              <>
+                {selectedAgent ? (
+                  <ComplianceTimeline agent={selectedAgent} />
+                ) : (
+                  agents.map(a => <ComplianceTimeline key={a.id} agent={a} />)
+                )}
+                {!selectedAgent && (
+                  <div style={{ textAlign: "center", padding: 12, fontSize: 11, color: "#374151" }}>
+                    Click any agent in Fleet view to isolate its timeline
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── TERRITORY MAP ── */}
+            {!loading && !error && activeView === "territory" && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16 }}>
+                <TerritoryMapbox agents={agents} selectedAgent={selectedAgent} onSelect={handleAgentSelect} />
+                <div>
+                  {(selectedAgent || agents[0]) && (() => {
+                    const a = selectedAgent || agents[0];
+                    const t = getTier(a.score);
+                    return (
+                      <Card>
+                        <CardHeader><span style={{ fontSize: 12, fontWeight: 600, color: "#F1F5F9" }}>Agent Detail</span></CardHeader>
+                        <div style={{ padding: 14 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                            <ScoreRing score={a.score} size={48} />
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9" }}>{a.displayName}</div>
+                              <div style={{ display: "flex", gap: 6, marginTop: 3 }}><TierBadge tier={a.tier} /><StatusIndicator status={a.status} /></div>
+                            </div>
                           </div>
+                          {[
+                            ["Identity", a.shortId],
+                            ["Role", a.role],
+                            ["Territory", a.territory.join(", ")],
+                            ["H3 Cells", `${a.h3Cells.length} cells`],
+                            ["Delegated By", a.delegatedBy?.name || "—"],
+                            ["Depth", a.delegationDepth],
+                            ["Scope", a.delegationScope.join(", ")],
+                            ["Breadcrumbs", a.breadcrumbs.toLocaleString()],
+                            ["Created", a.created],
+                            ["Violations", a.violations.length],
+                          ].map(([l, v], i) => (
+                            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid #111827", fontSize: 11 }}>
+                              <span style={{ color: "#4B5563" }}>{l}</span>
+                              <span style={{ color: "#9CA3AF", ...mono, textAlign: "right", maxWidth: 180 }}>{v}</span>
+                            </div>
+                          ))}
                         </div>
-                        {[
-                          ["Identity", a.shortId],
-                          ["Role", a.role],
-                          ["Territory", a.territory.join(", ")],
-                          ["H3 Cells", `${a.h3Cells.length} cells`],
-                          ["Delegated By", a.delegatedBy?.name || "—"],
-                          ["Depth", a.delegationDepth],
-                          ["Scope", a.delegationScope.join(", ")],
-                          ["Breadcrumbs", a.breadcrumbs.toLocaleString()],
-                          ["Created", a.created],
-                          ["Violations", a.violations.length],
-                        ].map(([l, v], i) => (
-                          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid #111827", fontSize: 11 }}>
-                            <span style={{ color: "#4B5563" }}>{l}</span>
-                            <span style={{ color: "#9CA3AF", ...mono, textAlign: "right", maxWidth: 180 }}>{v}</span>
+                      </Card>
+                    );
+                  })()}
+                  <Card style={{ marginTop: 12 }}>
+                    <div style={{ padding: "10px 14px", fontSize: 10, color: "#374151" }}>
+                      <SectionLabel>Map Legend</SectionLabel>
+                      <div style={{ marginTop: 6 }}>
+                        {Object.entries(TIERS).map(([k, t]) => (
+                          <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 0" }}>
+                            <span style={{ width: 10, height: 10, borderRadius: 2, background: t.bg, border: `1px solid ${t.border}`, display: "inline-block" }} />
+                            <span style={{ color: t.color, ...mono, fontSize: 9 }}>{k}</span>
                           </div>
                         ))}
                       </div>
-                    </Card>
-                  );
-                })()}
-                <Card style={{ marginTop: 12 }}>
-                  <div style={{ padding: "10px 14px", fontSize: 10, color: "#374151" }}>
-                    <SectionLabel>Map Legend</SectionLabel>
-                    <div style={{ marginTop: 6 }}>
-                      {Object.entries(TIERS).map(([k, t]) => (
-                        <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 0" }}>
-                          <span style={{ width: 10, height: 10, borderRadius: 2, background: t.bg, border: `1px solid ${t.border}`, display: "inline-block" }} />
-                          <span style={{ color: t.color, ...mono, fontSize: 9 }}>{k}</span>
-                        </div>
-                      ))}
+                      <div style={{ marginTop: 8, color: "#4B5563", lineHeight: 1.5 }}>
+                        Zone radius proportional to H3 cell count. Dashed lines show delegation relationships. Click a zone to inspect.
+                      </div>
                     </div>
-                    <div style={{ marginTop: 8, color: "#4B5563", lineHeight: 1.5 }}>
-                      Zone radius proportional to H3 cell count. Dashed lines show delegation relationships. Click a zone to inspect.
-                    </div>
-                  </div>
-                </Card>
+                  </Card>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ── AUDIT EXPORT ── */}
-          {!loading && !error && activeView === "audit" && <AuditExport agents={agents} />}
+            {/* ── AUDIT EXPORT ── */}
+            {!loading && !error && activeView === "audit" && <AuditExport agents={agents} />}
+          </div>
         </div>
-      </div>
       </div>{/* close Main Layout wrapper */}
     </div>
   );
