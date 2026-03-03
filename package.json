@@ -4,13 +4,13 @@
   "private": true,
   "description": "GNS-AIP Compliance Dashboard — Terna S.p.A.",
   "dependencies": {
+    "@supabase/supabase-js": "^2.43.0",
+    "h3-js": "^4.4.0",
+    "mapbox-gl": "^3.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "recharts": "^2.12.0",
-    "mapbox-gl": "^3.3.0",
-    "h3-js": "^4.1.0",
-    "@supabase/supabase-js": "^2.43.0"
+    "recharts": "^2.12.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -19,7 +19,15 @@
     "eject": "react-scripts eject"
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
-    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
