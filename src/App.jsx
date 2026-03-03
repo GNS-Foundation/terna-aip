@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import supabase from "./supabase";
+import LoginScreen from "./LoginScreen";
+import TerritoryMapbox from "./TerritoryMap";
 
 // ═══════════════════════════════════════════════════════════════
 // GNS-AIP COMPLIANCE DASHBOARD — LIVE DATA
@@ -358,7 +361,7 @@ function DataSourceBadge({ live }) {
 }
 
 // ── Territory Map (SVG Italy with H3 zones) ──
-function TerritoryMap({ agents, selectedAgent, onSelect }) {
+function TerritoryMapSVG({ agents, selectedAgent, onSelect }) {
   const mapW = 400, mapH = 500;
   const project = ([lat, lng]) => {
     const x = ((lng - 6.5) / (18.5 - 6.5)) * mapW;
@@ -869,6 +872,45 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [lastFetch, setLastFetch] = useState(null);
 
+  // ── Auth state (Supabase magic link) ──
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(!!supabase);
+
+  useEffect(() => {
+    if (!supabase) { setAuthLoading(false); return; }
+
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+      setAuthLoading(false);
+    });
+
+    // Listen for auth changes (magic link callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    if (supabase) await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  // If Supabase is configured and user not logged in, show login screen
+  if (supabase && authLoading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0A0F1A", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280", fontFamily: "DM Sans, sans-serif" }}>
+        Loading...
+      </div>
+    );
+  }
+
+  if (supabase && !user) {
+    return <LoginScreen supabase={supabase} onLogin={setUser} />;
+  }
+
   // ── Fetch live data from Railway API ──
   useEffect(() => {
     let cancelled = false;
@@ -969,7 +1011,7 @@ export default function Dashboard() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 8, color: "#374151", ...mono, letterSpacing: 1 }}>RETE DI TRASMISSIONE NAZIONALE</span>
-          <span style={{ fontSize: 8, color: "#2a3a4a", ...mono }}>v0.5.0</span>
+          <span style={{ fontSize: 8, color: "#2a3a4a", ...mono }}>v0.6.0</span>
         </div>
       </div>
 
@@ -1005,7 +1047,7 @@ export default function Dashboard() {
           <div style={{ fontSize: 8, color: "#374151", ...mono }}>API: gns-browser-production.up.railway.app</div>
         </div>
         <div style={{ padding: "10px 14px", borderTop: "1px solid #1E293B" }}>
-          <div style={{ fontSize: 9, color: "#374151", ...mono }}>v0.5.0-live · gns-aip.gcrumbs.com</div>
+          <div style={{ fontSize: 9, color: "#374151", ...mono }}>v0.6.0-live · gns-aip.gcrumbs.com</div>
           <div style={{ fontSize: 9, color: "#374151", marginTop: 2 }}>© 2026 ULISSY s.r.l.</div>
         </div>
       </div>
@@ -1024,7 +1066,8 @@ export default function Dashboard() {
             <span style={{ fontSize: 10, color: "#4B5563", ...mono }}>{clock.toLocaleTimeString()} CET</span>
             <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "#111827", borderRadius: 6, border: "1px solid #1E293B" }}>
               <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 5px #10B981" }} />
-              <span style={{ fontSize: 10, color: "#9CA3AF" }}>Camilo Ayerbe</span>
+              <span style={{ fontSize: 10, color: "#9CA3AF" }}>{user ? user.email : "Camilo Ayerbe"}</span>
+              {supabase && user && <button onClick={handleLogout} style={{ marginLeft: 4, padding: "2px 8px", fontSize: 9, background: "transparent", border: "1px solid #374151", borderRadius: 4, color: "#6B7280", cursor: "pointer" }}>Logout</button>}
             </div>
           </div>
         </div>
@@ -1128,7 +1171,7 @@ export default function Dashboard() {
           {/* ── TERRITORY MAP ── */}
           {!loading && !error && activeView === "territory" && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16 }}>
-              <TerritoryMap agents={agents} selectedAgent={selectedAgent} onSelect={handleAgentSelect} />
+              <TerritoryMapbox agents={agents} selectedAgent={selectedAgent} onSelect={handleAgentSelect} />
               <div>
                 {(selectedAgent || agents[0]) && (() => {
                   const a = selectedAgent || agents[0];
