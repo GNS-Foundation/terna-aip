@@ -98,8 +98,38 @@ async function fetchCompliance(pk) {
   return json.data;
 }
 
+// ── NEW v0.5.0: Live delegation tree ──
+async function fetchDelegations(pk) {
+  try {
+    const res = await fetch(`${API_BASE}/agents/${pk}/delegations`);
+    const json = await res.json();
+    if (!json.success) return null;
+    return json.data;
+  } catch { return null; }
+}
+
+// ── NEW v0.5.0: Live compliance history ──
+async function fetchComplianceHistory(pk) {
+  try {
+    const res = await fetch(`${API_BASE}/agents/${pk}/compliance/history`);
+    const json = await res.json();
+    if (!json.success) return null;
+    return json.data;
+  } catch { return null; }
+}
+
+// ── NEW v0.5.0: Live violations ──
+async function fetchViolations(pk) {
+  try {
+    const res = await fetch(`${API_BASE}/agents/${pk}/violations`);
+    const json = await res.json();
+    if (!json.success) return null;
+    return json.data;
+  } catch { return null; }
+}
+
 // Transform API manifest → dashboard agent shape
-function transformAgent(manifest, fleet, allManifests) {
+function transformAgent(manifest, fleet, allManifests, liveDelegation, liveHistory, liveViolations) {
   const pk = manifest.pk_root;
   const handle = manifest.agent_handle?.replace(/^@/, "") || pk.slice(0, 16);
   const territoryLabel = handle.split("@")[1] || manifest.jurisdiction || "unknown";
@@ -109,21 +139,59 @@ function transformAgent(manifest, fleet, allManifests) {
   const violations = manifest.stats?.violations || 0;
   const breadcrumbs = manifest.stats?.breadcrumbs || 0;
   const depth = manifest.principal?.chain_depth || 0;
-  const delegator = findDelegator(pk, allManifests.map(m => transformAgentBasic(m)));
+
+  // ── Delegation: prefer live API, fallback to hardcoded map ──
+  let delegator;
+  if (liveDelegation && liveDelegation.delegated_by) {
+    const db = liveDelegation.delegated_by;
+    if (db.delegator_pk === PRINCIPAL_PK) {
+      delegator = { type: "human", name: "Camilo Ayerbe", id: db.delegator_pk };
+    } else {
+      const parentM = allManifests.find(m => m.pk_root === db.delegator_pk);
+      delegator = { type: "agent", name: parentM?.manifest?.name || db.delegator_pk.slice(0, 8) + "...", id: db.delegator_pk };
+    }
+  } else {
+    delegator = findDelegator(pk, allManifests.map(m => transformAgentBasic(m)));
+  }
 
   // Determine status (flag as warning if violations > 0 and active)
   let status = API_STATUS_MAP[manifest.status] || "active";
   if (violations > 0 && status === "active") status = "warning";
 
-  // Build compliance history from breakdown
-  // In production: wire to GET /agents/:pk/compliance/history
-  const history = buildHistory(manifest, score);
+  // ── History: prefer live API, fallback to synthesized ──
+  let history;
+  if (liveHistory && liveHistory.history && liveHistory.history.length > 0) {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    history = liveHistory.history.map(h => ({
+      t: months[new Date(h.calculated_at).getMonth()] || "?",
+      s: h.score,
+    }));
+  } else {
+    history = buildHistory(manifest, score);
+  }
 
-  // Build violation entries from breadcrumb data
-  const violationList = buildViolations(pk, violations, manifest.home_cells);
+  // ── Violations: prefer live API, fallback to synthesized ──
+  let violationList;
+  if (liveViolations && liveViolations.violations && liveViolations.violations.length > 0) {
+    violationList = liveViolations.violations.map(v => ({
+      ts: v.timestamp,
+      type: v.severity || "TERRITORY_DRIFT",
+      detail: "Operated in cell " + v.h3_cell + " (outside declared territory)",
+      severity: "high",
+      h3_cell: v.h3_cell,
+      sequence: v.sequence_num,
+    }));
+  } else {
+    violationList = buildViolations(pk, violations, manifest.home_cells);
+  }
 
-  // Children (agents this one delegated to)
-  const children = (DELEGATION_MAP[pk] || []);
+  // ── Children: prefer live API, fallback to hardcoded map ──
+  let children;
+  if (liveDelegation && liveDelegation.delegated_to && liveDelegation.delegated_to.length > 0) {
+    children = liveDelegation.delegated_to.map(d => d.delegate_pk);
+  } else {
+    children = (DELEGATION_MAP[pk] || []);
+  }
 
   return {
     id: pk,
@@ -822,9 +890,17 @@ export default function Dashboard() {
 
         const validManifests = manifests.filter(Boolean);
 
-        // Step 3: Transform API data → dashboard shape
+        // Step 3: Fetch live delegations, history, and violations per agent
+        const [delegationsArr, historiesArr, violationsArr] = await Promise.all([
+          Promise.all(validManifests.map(m => fetchDelegations(m.pk_root).catch(() => null))),
+          Promise.all(validManifests.map(m => fetchComplianceHistory(m.pk_root).catch(() => null))),
+          Promise.all(validManifests.map(m => fetchViolations(m.pk_root).catch(() => null))),
+        ]);
+        if (cancelled) return;
+
+        // Step 4: Transform API data → dashboard shape (with live data)
         const transformed = validManifests
-          .map(m => transformAgent(m, fleet, validManifests))
+          .map((m, i) => transformAgent(m, fleet, validManifests, delegationsArr[i], historiesArr[i], violationsArr[i]))
           .sort((a, b) => b.score - a.score);
 
         setAgents(transformed);
@@ -893,7 +969,7 @@ export default function Dashboard() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 8, color: "#374151", ...mono, letterSpacing: 1 }}>RETE DI TRASMISSIONE NAZIONALE</span>
-          <span style={{ fontSize: 8, color: "#2a3a4a", ...mono }}>v0.4.0</span>
+          <span style={{ fontSize: 8, color: "#2a3a4a", ...mono }}>v0.5.0</span>
         </div>
       </div>
 
@@ -929,7 +1005,7 @@ export default function Dashboard() {
           <div style={{ fontSize: 8, color: "#374151", ...mono }}>API: gns-browser-production.up.railway.app</div>
         </div>
         <div style={{ padding: "10px 14px", borderTop: "1px solid #1E293B" }}>
-          <div style={{ fontSize: 9, color: "#374151", ...mono }}>v0.4.0 · gns-aip.gcrumbs.com</div>
+          <div style={{ fontSize: 9, color: "#374151", ...mono }}>v0.5.0-live · gns-aip.gcrumbs.com</div>
           <div style={{ fontSize: 9, color: "#374151", marginTop: 2 }}>© 2026 ULISSY s.r.l.</div>
         </div>
       </div>
