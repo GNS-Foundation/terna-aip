@@ -504,13 +504,224 @@ function ComplianceTimeline({ agent }) {
   );
 }
 
-// ── Audit Export ──
+// ── Audit Export — Real PDF & CSV Generation ──
+
+function generateReportData(framework, agents) {
+  const now = new Date().toISOString();
+  const principal = PRINCIPAL_PK;
+
+  const fleetRows = agents.map(a => ({
+    pk: a.pk_root,
+    name: a.displayName,
+    role: a.role,
+    territory: a.territory.join(", "),
+    tier: a.tier,
+    score: a.score,
+    status: a.status,
+    breadcrumbs: a.breadcrumbs,
+    violations: a.violations.length,
+    created: a.created,
+    delegatedBy: a.delegatedBy || "PRINCIPAL",
+    delegationDepth: a.delegationDepth,
+    delegationScope: a.delegationScope?.join(", ") || "—",
+  }));
+
+  const violationRows = agents.flatMap(a =>
+    a.violations.map(v => ({
+      agent: a.displayName,
+      pk: a.pk_root,
+      timestamp: v.ts,
+      type: v.type,
+      detail: v.detail,
+      severity: v.severity,
+    }))
+  );
+
+  const sections = {
+    euai: {
+      title: "EU AI Act Compliance Report",
+      subtitle: "Regulation (EU) 2024/1689 — High-Risk AI System Audit",
+      sections: [
+        { heading: "Art. 14 — Human Oversight", content: `Principal: ${principal.slice(0,16)}...${principal.slice(-8)}\nDelegation chain depth: max ${Math.max(...agents.map(a => a.delegationDepth))}\nAll agents traceable to human principal via Ed25519 signed delegation certificates.\nScope narrows at each delegation level (non-escalation enforced).` },
+        { heading: "Art. 13 — Traceability", content: `Total breadcrumbs collected: ${agents.reduce((s,a) => s + a.breadcrumbs, 0)}\nEach breadcrumb: H3 cell (res 7) + Ed25519 signature + UTC timestamp\nChain integrity: breadcrumbs form append-only hash chain per agent.\nStorage: Supabase PostgreSQL with RLS policies.` },
+        { heading: "Delegation Chain Audit", content: fleetRows.map(r => `  ${r.name}: depth ${r.delegationDepth}, delegated by ${r.delegatedBy}, scope [${r.delegationScope}]`).join("\n") },
+        { heading: "Risk Classification", content: `System type: AI Agent Fleet — Grid Infrastructure Monitoring\nClassification: HIGH-RISK (Annex III, Category 2 — Critical Infrastructure)\nOrganization: Terna S.p.A. — Rete di Trasmissione Nazionale\nGovernance protocol: GNS-AIP (Agent Identity Protocol)` },
+        { heading: "High-Risk System Registry Entry", content: `Registry ID: GNS-AIP-TERNA-${now.slice(0,10).replace(/-/g,"")}\nTotal agents: ${agents.length}\nActive: ${agents.filter(a => a.status === "active" || a.status === "warning").length}\nViolations (30d): ${violationRows.length}\nAvg compliance score: ${Math.round(agents.reduce((s,a) => s + a.score, 0) / agents.length)}` },
+      ],
+    },
+    gdpr: {
+      title: "GDPR Art. 22 Compliance Report",
+      subtitle: "Automated Decision-Making & Profiling Audit",
+      sections: [
+        { heading: "Automated Decision Inventory", content: agents.map(a => `  ${a.displayName} (${a.tier}): ${a.role}\n    Status: ${a.status} | Score: ${a.score} | Territory: ${a.territory.join(", ")}`).join("\n") },
+        { heading: "Human Principal Chain Proof", content: `All automated decisions traceable to human principal:\n  Principal PK: ${principal.slice(0,16)}...${principal.slice(-8)}\n  Delegation method: Ed25519 signed certificates\n  Chain verification: Cryptographic proof at each level\n  Max depth: ${Math.max(...agents.map(a => a.delegationDepth))} levels` },
+        { heading: "Territorial Compliance Verification", content: agents.map(a => `  ${a.displayName}: declared ${a.territory.join(", ")} | cells: ${a.h3Cells?.length || 0} | violations: ${a.violations.length}`).join("\n") },
+        { heading: "Data Processing Scope Attestation", content: agents.map(a => `  ${a.displayName}: scope [${a.delegationScope?.join(", ") || "—"}]\n    Breadcrumbs: ${a.breadcrumbs} | H3 Resolution: 7 (~5.16 km²)`).join("\n") },
+        { heading: "Right to Explanation Evidence", content: `Each agent action is:\n  1. Signed with agent's Ed25519 private key\n  2. Bound to declared territory (H3 cells)\n  3. Scoped by delegation certificate capabilities\n  4. Traceable through breadcrumb chain to human principal\n  5. Auditable via compliance score breakdown (delegation, territory, history, staking)` },
+      ],
+    },
+    finma: {
+      title: "FINMA Compliance Report",
+      subtitle: "Financial Market Supervisory Authority — Agent Activity Audit",
+      sections: [
+        { heading: "Agent Activity Timeline", content: agents.map(a => `  ${a.displayName} (created ${a.created}):\n    Score progression: ${a.history.map(h => `${h.t}:${h.s}`).join(" → ")}`).join("\n") },
+        { heading: "Financial Operation Attestation", content: `Organization: Terna S.p.A.\nJurisdiction: EU-IT\nStaking: GNS tokens staked per agent as commitment bond\nSettlement: Stellar network (Ed25519 native)\nPayment scope: IDUP payment layer integration` },
+        { heading: "Compliance Score Cryptographic Proof", content: agents.map(a => `  ${a.displayName}:\n    Score: ${a.score}/100 | Tier: ${a.tier}\n    Breakdown: delegation ${a._manifest?.compliance?.breakdown?.delegation || "—"}, territory ${a._manifest?.compliance?.breakdown?.territory || "—"}, history ${a._manifest?.compliance?.breakdown?.history || "—"}, staking ${a._manifest?.compliance?.breakdown?.staking || "—"}`).join("\n") },
+        { heading: "Breadcrumb Audit Trail Export", content: `Total breadcrumbs: ${agents.reduce((s,a) => s + a.breadcrumbs, 0)}\nPer agent:\n${agents.map(a => `  ${a.displayName}: ${a.breadcrumbs} breadcrumbs, ${a.h3Cells?.length || 0} H3 cells`).join("\n")}` },
+        { heading: "Risk Exposure Summary", content: `Total violations: ${violationRows.length}\n${violationRows.length > 0 ? violationRows.map(v => `  [${v.severity.toUpperCase()}] ${v.agent} — ${v.type}: ${v.detail} (${v.timestamp})`).join("\n") : "  No violations recorded."}` },
+      ],
+    },
+  };
+
+  return { meta: { generated: now, principal, framework, agentCount: agents.length }, fleet: fleetRows, violations: violationRows, report: sections[framework] };
+}
+
+function downloadFile(content, filename, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportCSV(framework, agents) {
+  const data = generateReportData(framework, agents);
+  const label = data.report.title.replace(/\s+/g, "_");
+  const ts = data.meta.generated.slice(0, 19).replace(/[:\-T]/g, "");
+
+  let csv = `# ${data.report.title}\n# ${data.report.subtitle}\n# Generated: ${data.meta.generated}\n# Principal: ${data.meta.principal}\n# Agents: ${data.meta.agentCount}\n\n`;
+
+  // Fleet table
+  csv += "## AGENT FLEET\n";
+  csv += "PK,Name,Role,Territory,Tier,Score,Status,Breadcrumbs,Violations,Created,Delegated_By,Depth,Scope\n";
+  data.fleet.forEach(r => {
+    csv += `${r.pk},"${r.name}","${r.role}","${r.territory}",${r.tier},${r.score},${r.status},${r.breadcrumbs},${r.violations},${r.created},"${r.delegatedBy}",${r.delegationDepth},"${r.delegationScope}"\n`;
+  });
+
+  // Violations table
+  if (data.violations.length > 0) {
+    csv += "\n## VIOLATIONS\n";
+    csv += "Timestamp,Agent,PK,Type,Severity,Detail\n";
+    data.violations.forEach(v => {
+      csv += `${v.timestamp},"${v.agent}",${v.pk},${v.type},${v.severity},"${v.detail}"\n`;
+    });
+  }
+
+  // Report sections
+  csv += `\n## REPORT SECTIONS\n`;
+  data.report.sections.forEach(s => {
+    csv += `\n### ${s.heading}\n${s.content}\n`;
+  });
+
+  downloadFile(csv, `GNS-AIP_${label}_${ts}.csv`, "text/csv;charset=utf-8");
+}
+
+function exportPDF(framework, agents) {
+  const data = generateReportData(framework, agents);
+  const fwColors = { euai: "#3B82F6", gdpr: "#8B5CF6", finma: "#10B981" };
+  const accentColor = fwColors[framework] || "#3B82F6";
+
+  const html = `<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>${data.report.title}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  @page { size: A4; margin: 20mm 15mm; }
+  body { font-family:'DM Sans',sans-serif; font-size:11px; color:#1E293B; line-height:1.5; padding:40px; max-width:800px; margin:0 auto; }
+  .mono { font-family:'JetBrains Mono',monospace; }
+  .header { border-bottom:3px solid ${accentColor}; padding-bottom:16px; margin-bottom:24px; }
+  .header h1 { font-size:22px; font-weight:800; color:${accentColor}; margin-bottom:4px; }
+  .header h2 { font-size:12px; font-weight:500; color:#64748B; }
+  .meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:12px; margin-bottom:20px; font-size:10px; }
+  .meta span { color:#64748B; }
+  .meta strong { color:#1E293B; }
+  .section { margin-bottom:18px; page-break-inside:avoid; }
+  .section h3 { font-size:13px; font-weight:700; color:${accentColor}; border-left:3px solid ${accentColor}; padding-left:10px; margin-bottom:8px; }
+  .section pre { background:#F8FAFC; border:1px solid #E2E8F0; border-radius:4px; padding:10px 12px; font-size:9.5px; font-family:'JetBrains Mono',monospace; white-space:pre-wrap; word-break:break-all; color:#334155; line-height:1.6; }
+  table { width:100%; border-collapse:collapse; font-size:9px; margin:8px 0; }
+  th { background:${accentColor}; color:white; padding:6px 8px; text-align:left; font-weight:600; font-size:8px; letter-spacing:0.5px; text-transform:uppercase; }
+  td { padding:5px 8px; border-bottom:1px solid #E2E8F0; font-family:'JetBrains Mono',monospace; font-size:8.5px; }
+  tr:nth-child(even) { background:#F8FAFC; }
+  .footer { border-top:2px solid #E2E8F0; padding-top:12px; margin-top:24px; font-size:9px; color:#94A3B8; display:flex; justify-content:space-between; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:8px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+  .print-btn { position:fixed; top:16px; right:16px; background:${accentColor}; color:white; border:none; padding:10px 20px; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+  .print-btn:hover { opacity:0.9; }
+  @media print { .print-btn { display:none; } }
+</style>
+</head><body>
+<button class="print-btn" onclick="window.print()">⬇ Save as PDF</button>
+<div class="header">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1>${data.report.title}</h1>
+      <h2>${data.report.subtitle}</h2>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:14px;font-weight:800;background:linear-gradient(135deg,#3B82F6,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">GNS-AIP</div>
+      <div class="mono" style="font-size:8px;color:#94A3B8;letter-spacing:1px">COMPLIANCE DASHBOARD</div>
+    </div>
+  </div>
+</div>
+<div class="meta">
+  <div><span>Generated:</span> <strong>${new Date(data.meta.generated).toLocaleString("en-GB", { dateStyle: "long", timeStyle: "medium" })}</strong></div>
+  <div><span>Organization:</span> <strong>Terna S.p.A. — RTN</strong></div>
+  <div><span>Principal:</span> <strong class="mono" style="font-size:9px">${data.meta.principal.slice(0,20)}...${data.meta.principal.slice(-8)}</strong></div>
+  <div><span>Agent Fleet:</span> <strong>${data.meta.agentCount} agents · ${agents.reduce((s,a) => s + a.breadcrumbs, 0)} breadcrumbs</strong></div>
+</div>
+<table>
+  <thead><tr><th>Agent</th><th>Territory</th><th>Tier</th><th>Score</th><th>Status</th><th>Breadcrumbs</th><th>Violations</th><th>Depth</th></tr></thead>
+  <tbody>
+${data.fleet.map(r => `    <tr><td><strong>${r.name}</strong></td><td>${r.territory}</td><td>${r.tier}</td><td>${r.score}</td><td>${r.status}</td><td>${r.breadcrumbs}</td><td style="color:${r.violations > 0 ? "#EF4444" : "#10B981"}">${r.violations}</td><td>${r.delegationDepth}</td></tr>`).join("\n")}
+  </tbody>
+</table>
+${data.report.sections.map(s => `<div class="section"><h3>${s.heading}</h3><pre>${s.content}</pre></div>`).join("\n")}
+${data.violations.length > 0 ? `
+<div class="section">
+  <h3>Violation Log</h3>
+  <table>
+    <thead><tr><th>Timestamp</th><th>Agent</th><th>Type</th><th>Severity</th><th>Detail</th></tr></thead>
+    <tbody>
+${data.violations.map(v => `      <tr><td>${v.timestamp.replace("T"," ").slice(0,19)}</td><td>${v.agent}</td><td class="mono">${v.type}</td><td><span class="badge" style="background:${v.severity==="high"?"#FEE2E2;color:#DC2626":"#FEF3C7;color:#D97706"}">${v.severity.toUpperCase()}</span></td><td>${v.detail}</td></tr>`).join("\n")}
+    </tbody>
+  </table>
+</div>` : ""}
+<div class="footer">
+  <div>GNS-AIP · Agent Identity Protocol · Terna S.p.A. · <span class="mono">Ed25519</span> cryptographic signatures</div>
+  <div class="mono">gns-aip.gcrumbs.com</div>
+</div>
+</body></html>`;
+
+  const win = window.open("", "_blank");
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  }
+}
+
 function AuditExport({ agents }) {
   const [generating, setGenerating] = useState(null);
+  const [exported, setExported] = useState({});
 
   const handleExport = (framework, format) => {
-    setGenerating(`${framework}-${format}`);
-    setTimeout(() => setGenerating(null), 2000);
+    const key = `${framework}-${format}`;
+    setGenerating(key);
+    try {
+      if (format === "CSV") {
+        exportCSV(framework, agents);
+      } else {
+        exportPDF(framework, agents);
+      }
+      setExported(prev => ({ ...prev, [key]: true }));
+    } catch (err) {
+      console.error("Export failed:", err);
+    }
+    setTimeout(() => setGenerating(null), 1200);
   };
 
   const frameworks = [
@@ -534,18 +745,26 @@ function AuditExport({ agents }) {
                   </div>
                 ))}
                 <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                  {["PDF", "CSV"].map(fmt => (
-                    <button key={fmt} onClick={() => handleExport(fw.key, fmt)}
-                      disabled={generating === `${fw.key}-${fmt}`}
-                      style={{
-                        flex: 1, padding: "8px 0", borderRadius: 6, border: `1px solid ${fw.color}40`,
-                        background: generating === `${fw.key}-${fmt}` ? `${fw.color}20` : "transparent",
-                        color: fw.color, cursor: "pointer", fontSize: 11, fontWeight: 700,
-                        ...mono, transition: "all 0.15s",
-                      }}>
-                      {generating === `${fw.key}-${fmt}` ? "Generating..." : `Export ${fmt}`}
-                    </button>
-                  ))}
+                  {["PDF", "CSV"].map(fmt => {
+                    const key = `${fw.key}-${fmt}`;
+                    const isGenerating = generating === key;
+                    const wasExported = exported[key];
+                    return (
+                      <button key={fmt} onClick={() => handleExport(fw.key, fmt)}
+                        disabled={isGenerating}
+                        style={{
+                          flex: 1, padding: "8px 0", borderRadius: 6,
+                          border: `1px solid ${wasExported ? fw.color : `${fw.color}40`}`,
+                          background: isGenerating ? `${fw.color}20` : wasExported ? `${fw.color}15` : "transparent",
+                          color: fw.color, cursor: isGenerating ? "wait" : "pointer", fontSize: 11, fontWeight: 700,
+                          ...mono, transition: "all 0.15s",
+                        }}
+                        onMouseOver={e => { if (!isGenerating) { e.currentTarget.style.background = `${fw.color}20`; e.currentTarget.style.borderColor = fw.color; }}}
+                        onMouseOut={e => { if (!isGenerating) { e.currentTarget.style.background = wasExported ? `${fw.color}15` : "transparent"; e.currentTarget.style.borderColor = wasExported ? fw.color : `${fw.color}40`; }}}>
+                        {isGenerating ? "⏳ Generating..." : wasExported ? `✓ Export ${fmt}` : `Export ${fmt}`}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </Card>
@@ -674,7 +893,7 @@ export default function Dashboard() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 8, color: "#374151", ...mono, letterSpacing: 1 }}>RETE DI TRASMISSIONE NAZIONALE</span>
-          <span style={{ fontSize: 8, color: "#2a3a4a", ...mono }}>v0.3.0</span>
+          <span style={{ fontSize: 8, color: "#2a3a4a", ...mono }}>v0.4.0</span>
         </div>
       </div>
 
@@ -710,7 +929,7 @@ export default function Dashboard() {
           <div style={{ fontSize: 8, color: "#374151", ...mono }}>API: gns-browser-production.up.railway.app</div>
         </div>
         <div style={{ padding: "10px 14px", borderTop: "1px solid #1E293B" }}>
-          <div style={{ fontSize: 9, color: "#374151", ...mono }}>v0.3.0-linked · gns-aip.gcrumbs.com</div>
+          <div style={{ fontSize: 9, color: "#374151", ...mono }}>v0.4.0 · gns-aip.gcrumbs.com</div>
           <div style={{ fontSize: 9, color: "#374151", marginTop: 2 }}>© 2026 ULISSY s.r.l.</div>
         </div>
       </div>
